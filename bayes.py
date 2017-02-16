@@ -39,6 +39,14 @@ def createVocabList():
         vocabSet.add(word)
     return list(vocabSet)
 
+def createVocabList2017():
+    vocabSet = set([])  #create empty set
+    with open('dic_20170213.txt', 'r') as fin:
+        words = fin.read().split()
+    for word in words:
+        vocabSet.add(word)
+    return list(vocabSet)
+
 def trainNB0(trainMatrix,trainCategory):
     numTrainDocs = len(trainMatrix)
     numWords = len(trainMatrix[0])
@@ -92,27 +100,29 @@ def spamTest():
     docList=[]; classList = []
     testdocList = []; testclassList = []
     docList,classList = loadDataSet()
-    vocabList = createVocabList()#create vocabulary
-    testdocList,testclassList = loadTestDataSet()
+    vocabList = createVocabList2017()#create vocabulary
     trainingSet = range(len(docList))
-    testSet     = range(len(testdocList))       #create test set
-    # testSet = []
-    # for i in range(int(0.2*len(docList))):
-    #     randIndex = int(random.uniform(0,len(trainingSet)))
-    #     testSet.append(trainingSet[randIndex])
-    #     del(trainingSet[randIndex])  
+    testSet = []
+    for i in range(int(0.2*len(docList))):
+        randIndex = int(random.uniform(0,len(trainingSet)))
+        testSet.append(trainingSet[randIndex])
+        # testdocList.append(docList[randIndex])
+        # testclassList.append(classList[randIndex])
+        del(trainingSet[randIndex])  
     print 'train set:', len(trainingSet)
     print 'test set:', len(testSet)
     trainMat=[]; trainClasses = []
-    for docIndex in trainingSet:#train the classifier (get probs) trainNB0
+    #train the classifier (get probs) trainNB0
+    for docIndex in trainingSet:
         trainMat.append(setOfWords2Vec(vocabList, docList[docIndex].split()))
         trainClasses.append(classList[docIndex])
         # break
     p0V,p1V,pSpam = trainNB0(array(trainMat),array(trainClasses))
     errorCount = 0
-    for docIndex in testSet:        #classify the remaining items
-        wordVector = setOfWords2Vec(vocabList, testdocList[docIndex].split())
-        if classifyNB(array(wordVector),p0V,p1V,pSpam) != testclassList[docIndex]:
+    #classify the remaining items
+    for docIndex in testSet:        
+        wordVector = setOfWords2Vec(vocabList, docList[docIndex].split())
+        if classifyNB(array(wordVector),p0V,p1V,pSpam) != classList[docIndex]:
             errorCount += 1
             #print "classification error",docList[docIndex]
         # break
@@ -149,18 +159,11 @@ def uncertainTest():
     with open('paperList.txt', 'r') as fin:
         paperList = fin.readlines()
     assert(len(predList) == len(paperList))
-    for paper, pred in zip(paperList, predList):
-        content = paper.strip('\n') + '\t' + str(pred) + '\n'
-        fout.write(content)
-
-if __name__ == '__main__':
-    # uncertainTest()
-    with open('predList.txt', 'r') as fin:
-        predList = fin.readlines()
-    with open('paperList.txt', 'r') as fin:
-        paperList = fin.readlines()
-    assert(len(predList) == len(paperList))
     with open('predictions.txt', 'w') as fout:
         for paper, pred in zip(paperList, predList):
-            content = paper.strip('\n') + '\t' + str(pred).strip('\n') + '\n'
+            content = paper.strip('\n') + '\t' + str(pred) + '\n'
             fout.write(content)
+
+if __name__ == '__main__':
+    spamTest() # for train accuracy
+    # uncertainTest()
